@@ -38,6 +38,53 @@ server.post("/categories", async (req, res) => {
   res.send(existingNames.rows).status(201);
 });
 
+server.get("/games", async (req, res) => {
+  const name = req.query.name;
+  try {
+    if (name) {
+      const games = await connection.query(
+        `SELECT games.*, categories.name AS "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id WHERE lower(games.name) LIKE '%'||$1||'%';
+    `,
+        [name]
+      );
+      res.send(games.rows);
+    } else {
+      const games = await connection.query(`
+      SELECT games.*, categories.name AS "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id;
+    `);
+      res.send(games.rows);
+    }
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+server.post("/games", async (req, res) => {
+  const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
+
+  if (!name || stockTotal < 0 || pricePerDay < 0) {
+    return res.send(400);
+  }
+
+  const existingNames = await connection.query("SELECT name FROM games;");
+  const compare = existingNames.rows.find((games) => games.name === name);
+  if (compare) {
+    return res.sendStatus(409);
+  }
+
+  try {
+    await connection.query(
+      `INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5);`,
+      [name, image, stockTotal, categoryId, pricePerDay]
+    );
+    res.sendStatus(201);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
 server.listen(4000, () => {
   console.log("Server listening on port 4000.");
 });
