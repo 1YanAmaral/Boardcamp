@@ -104,7 +104,9 @@ export async function returnRental(req, res) {
       )
     ).rows[0].pricePerDay;
 
-    const lateDays = (new Date(date) - rentDate) / (1000 * 60 * 60 * 24);
+    const lateDays = Math.ceil(
+      (new Date(date) - rentDate) / (1000 * 60 * 60 * 24)
+    );
     const fee = parseInt(lateDays * pricePerDay);
 
     await connection.query(
@@ -112,7 +114,6 @@ export async function returnRental(req, res) {
       [date, fee]
     );
 
-    console.log(Math.ceil(lateDays), fee);
     res.sendStatus(200);
   } catch (error) {
     console.error(error);
