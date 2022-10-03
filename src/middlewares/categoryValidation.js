@@ -1,7 +1,7 @@
 import categorySchema from "../schemas/categorySchema.js";
 
 function validateCategory(req, res, next) {
-  const { name } = req.body;
+  const name = req.body;
   const validation = categorySchema.validate(name, { abortEarly: true });
 
   if (validation.error) {
